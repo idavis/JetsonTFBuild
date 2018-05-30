@@ -4,6 +4,7 @@
 
 BRANCH=master
 SWAPSIZE=8
+BAZELVERSION=0.13.0
 # Log the location this was run from
 whereami=$(pwd)
 install_dir=$whereami/TensorFlow_Install
@@ -42,6 +43,11 @@ if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root, use sudo "$0" instead" 1>&2
    exit 1
 fi
+
+if [ "$BRANCH" == "r1.7" ]; then
+   BAZELVERSION=0.11.1
+fi
+
 
 echo "This bash script will install TensorFlow       "
 echo "branch on a Jetson system that has been setup  "
@@ -110,12 +116,12 @@ bazel version
 ## Install Prereqs for Bazel and Tensorflow
 apt-get install openjdk-8-jdk -y
 apt-get install zip unzip autoconf automake libtool curl zlib1g-dev maven -y
-apt-get install python-numpy python-enum34 python-mock swig python-dev python-pip python-wheel -y
+apt-get install python-numpy swig python-dev python-pip python-wheel -y
 apt-get install python3-dev python3-pip python3-wheel python3-numpy -y
-# Go out and get Bazel 0.9
-wget --no-check-certificate https://github.com/bazelbuild/bazel/releases/download/0.13.0/bazel-0.13.0-dist.zip
+# Go out and get Bazel
+wget --no-check-certificate https://github.com/bazelbuild/bazel/releases/download/$BAZELVERSION/bazel-$BAZELVERSION-dist.zip
 # Unzip and install Bazel
-unzip bazel-0.13.0-dist.zip -d bazel
+unzip bazel-$BAZELVERSION-dist.zip -d bazel
 chmod -R ug+rwx bazel
 cd bazel
 ./compile.sh
@@ -123,7 +129,7 @@ cp output/bazel /usr/local/bin
 chown -R $(whoami) /usr/local/bin
 # Cleanup and save disk space
 cd $install_dir
-rm -r -f bazel-0.13.0-dist.zip
+rm -r -f bazel-$BAZELVERSION-dist.zip
 rm -r -f bazel
 }
 
@@ -139,11 +145,16 @@ fi
 
 cd tensorflow/
 git checkout $BRANCH
+git reset --hard HEAD
 
 if [ $BRANCH == "master" ] || [ $BRANCH == "r1.8" ]; then
     git apply $whereami/tx2.patch
 fi
 
+if [ "$BRANCH" == "r1.7" ]; then
+    patch $install_dir/tensorflow/third_party/tensorrt/tensorrt_configure.bzl $whereami/tensorrt_configure.bzl.patch
+    patch $install_dir/tensorflow/third_party/png.BUILD $whereami/png.BUILD.patch
+fi
 
 # Use the handy script to set Environment Variables
 # Otherwise, configure will be an interactive process
@@ -204,3 +215,4 @@ rm $install_dir/swapfile.swap
 
 # Back to where we came from
 cd $whereami
+

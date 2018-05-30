@@ -1,0 +1,15 @@
+diff --git a/third_party/tensorrt/tensorrt_configure.bzl b/third_party/tensorrt/tensorrt_configure.bzl
+index 8e76e5d..f7f4669 100644
+--- a/third_party/tensorrt/tensorrt_configure.bzl
++++ b/third_party/tensorrt/tensorrt_configure.bzl
+@@ -53,8 +53,8 @@ def _find_trt_header_dir(repository_ctx, trt_install_path):
+   Returns:
+     The path of the directory containing the TensorRT header.
+   """
+-  if trt_install_path == "/usr/lib/x86_64-linux-gnu":
+-    path = "/usr/include/x86_64-linux-gnu"
++  if trt_install_path == "/usr/lib/aarch64-linux-gnu":
++    path = "/usr/include/aarch64-linux-gnu"
+     if _headers_exist(repository_ctx, path):
+       return path
+   path = str(repository_ctx.path("%s/../include" % trt_install_path).realpath)
